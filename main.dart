@@ -80,6 +80,24 @@ void main() {
     },
   ];
 
+  List<Map<String, dynamic>> novaLista = produtos.map((map) {
+    String valorVendaString = map["valor_venda"].toString().replaceAll(
+      ',',
+      '.',
+    );
+    double valorVenda = double.parse(valorVendaString);
+    double valorCompra = double.parse(map["valor_compra"]);
+    double lucro = valorVenda - valorCompra;
+
+    return {
+      "id": map['id'],
+      "produto": map['produto'],
+      "valor_venda": valorVenda,
+      "valor_compra": valorCompra,
+      "lucro": lucro,
+    };
+  }).toList();
+
   print("\n\nPRODUTOS\n");
 
   //*Contexto: Você recebeu uma lista de Produtos da API e
@@ -88,6 +106,14 @@ void main() {
 
   //? Imprimir na tela conforme modelo abaixo:
 
+  novaLista.forEach((element) {
+    String id = element['id'].toString();
+    String produto = element['produto'];
+    String lucro = (element['lucro'] as double).transformarEmDinheiroBr();
+
+    print("ID: $id | PRODUTO: $produto | LUCRO POR VENDA: $lucro");
+  });
+
   // print("ID: 1| PRODUTO: SABÃO | LUCRO POR VENDA: R$12,00");
   // print("ID: 1| PRODUTO: oleo | LUCRO POR VENDA: -R$7,00");
 
@@ -95,18 +121,65 @@ void main() {
 
   //*Contexto: Agora você precisar gerar alguns relatórios sintéticos para o usuário:
 
+  double totalValorVenda = 0;
+  double totalValorCompra = 0;
+  double totalLucro = 0;
+  int quantidadeDaLucro = 0;
+  int quantidadeDaLucroAcimaDeDois = 0;
+
+  novaLista.forEach((element) {
+    totalLucro += element['lucro'];
+    totalValorVenda += element['valor_venda'];
+    totalValorCompra += element['valor_compra'];
+
+    if (element['lucro'] > 0) {
+      quantidadeDaLucro++;
+    }
+    if (element['lucro'] > 2) {
+      quantidadeDaLucroAcimaDeDois++;
+    }
+  });
+
   //? Imprimir a média do valor de venda: Média valor venda: R$21,00
+  print(
+    "Média valor venda: ${(totalValorVenda / novaLista.length).transformarEmDinheiroBr()}",
+  );
   //? Imprimir a média do valor de compra: Média valor compra: R$18,00
-  //? Imprimir a média do lucro: Média valor compra: R$3,50
+  print(
+    "Média valor compra: ${(totalValorCompra / novaLista.length).transformarEmDinheiroBr()}",
+  );
+  //? Imprimir a média do lucro: Média valor lucro: R$3,50
+  print(
+    "Média valor lucro: ${(totalLucro / novaLista.length).transformarEmDinheiroBr()}",
+  );
+
   print("\n\nMAIOR PARTE DOS PRODUTOS DA LUCRO?:\n");
   //? imprimir "SIM" ou "NÃO"
+  print(quantidadeDaLucro > (novaLista.length / 2) ? "SIM" : "NÃO");
+
   print("\n\nMAIOR PARTE DOS PRODUTOS DA LUCRO ACIMA DE R\$2,00?:\n");
   //? imprimir "SIM" ou "NÃO"
+  print(quantidadeDaLucroAcimaDeDois > (quantidadeDaLucro / 2) ? "SIM" : "NÃO");
 
   print("\n\nPRODUTOS QUE DÃO PREJUIZO:\n");
 
   //*Contexto: Agora você precisar gerar um relatório analitico mostrando
   //*os produtos que dão prejuizo:
 
+  final listaDePrejuizo = novaLista.where((element) => element['lucro'] < 0);
+
+  listaDePrejuizo.forEach((element) {
+    String id = element['id'].toString();
+    String produto = element['produto'];
+    String lucro = (element['lucro'] as double).transformarEmDinheiroBr();
+    print("ID: $id | PRODUTO: $produto | PREJUIZO: $lucro");
+  });
+
   //? imprimir produtos que dão prejuizo, para cada linha imprimir conforme exemplo: ID: 1 | PRODUTO: SABÃO | PREJUIZO: -R$3,00
+}
+
+extension FormatadoresDeDinheiros on double {
+  String transformarEmDinheiroBr() => this.isNegative
+      ? "-R\$${abs().toStringAsFixed(2).replaceAll('.', ',')}"
+      : "R\$${abs().toStringAsFixed(2).replaceAll('.', ',')}";
 }
